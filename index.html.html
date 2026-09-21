@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HODO watches - អតិថិជន</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Preahvihear&family=Kantumruy+Pro:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Kantumruy Pro', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .font-brand { font-family: 'Preahvihear', sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Header -->
+    <header class="bg-slate-900 border-b border-amber-500/30 sticky top-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+            <div>
+                <h1 class="text-2xl font-brand font-bold text-amber-400 tracking-wider">HODO WATCHES</h1>
+                <p class="text-xs text-slate-400">ហាងនាឡិកាដៃស៊ីវិល័យ</p>
+            </div>
+            <button onclick="toggleCart()" class="relative bg-amber-500 hover:bg-amber-600 text-slate-950 px-4 py-2 rounded-xl font-bold flex items-center gap-2 transition">
+                🛒 កន្ត្រកទំនិញ <span id="cartCount" class="bg-slate-950 text-amber-400 text-xs px-2 py-0.5 rounded-full">0</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Catalog -->
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <div class="mb-6 flex justify-between items-center">
+            <h2 class="text-xl font-bold text-amber-200">✨ ម៉ូដនាឡិកាថ្មីៗ</h2>
+            <input type="text" id="searchInput" oninput="filterProducts()" placeholder="ស្វែងរកម៉ូដ / ប្រភេទ..." class="bg-slate-800 border border-slate-700 px-4 py-2 rounded-xl text-sm focus:outline-none focus:border-amber-500">
+        </div>
+        
+        <div id="productGrid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <!-- Products rendered dynamically -->
+        </div>
+    </main>
+
+    <!-- Cart Modal -->
+    <div id="cartModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden z-50 flex justify-end">
+        <div class="bg-slate-900 w-full max-w-md h-full p-6 flex flex-col justify-between border-l border-amber-500/30 shadow-2xl">
+            <div>
+                <div class="flex justify-between items-center mb-6 border-b border-slate-800 pb-4">
+                    <h3 class="text-xl font-bold text-amber-400">កន្ត្រកទំនិញរបស់អ្នក</h3>
+                    <button onclick="toggleCart()" class="text-slate-400 hover:text-white text-xl">✕</button>
+                </div>
+                <div id="cartItems" class="space-y-4 max-h-[50vh] overflow-y-auto pr-2">
+                    <!-- Cart items -->
+                </div>
+            </div>
+            <div class="border-t border-slate-800 pt-4">
+                <div class="flex justify-between text-lg font-bold mb-4">
+                    <span>សរុបទឹកប្រាក់៖</span>
+                    <span id="cartTotal" class="text-amber-400">$0.00</span>
+                </div>
+                <div class="space-y-3">
+                    <input type="text" id="custName" placeholder="ឈ្មោះអ្នកទិញ" class="w-full bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-sm">
+                    <input type="text" id="custPhone" placeholder="លេខទូរស័ព្ទ" class="w-full bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-sm">
+                    <textarea id="custAddress" placeholder="អាសយដ្ឋានដឹកជញ្ជូន" class="w-full bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-sm h-20"></textarea>
+                    <button onclick="checkout()" class="w-full bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold py-3 rounded-xl transition shadow-lg">បញ្ជាទិញឥឡូវនេះ (Telegram)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Default sample products if none in storage
+        let products = JSON.parse(localStorage.getItem('hodo_products')) || [
+            { id: 1, model: 'HODO Classic Gold', img: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500', movement: 'Automatic', strap: 'ដែកខ្សែកូល - មាស', size: '41mm', glass: 'Sapphire', waterRes: '5ATM', features: 'Date display, Luminous', sellPrice: 249, stock: 5 },
+            { id: 2, model: 'HODO Sport Chrono', img: 'https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?w=500', movement: 'Quartz', strap: 'ស្បែកខ្មៅ', size: '43mm', glass: 'Mineral', waterRes: '10ATM', features: 'Chronograph, Stopwatch', sellPrice: 180, stock: 3 }
+        ];
+
+        let cart = [];
+
+        function renderProducts(list = products) {
+            const grid = document.getElementById('productGrid');
+            if(list.length === 0) {
+                grid.innerHTML = `<p class="col-span-full text-center text-slate-400 py-10">មិនមាននាឡិកាក្នុងស្តុកទេបច្ចុប្បន្ន</p>`;
+                return;
+            }
+            grid.innerHTML = list.map(p => `
+                <div class="bg-slate-800/80 border border-slate-700/60 rounded-2xl overflow-hidden shadow-lg hover:border-amber-500/50 transition">
+                    <div class="h-48 overflow-hidden bg-slate-900 relative">
+                        <img src="${p.img}" alt="${p.model}" class="w-full h-full object-cover hover:scale-105 transition duration-300">
+                        <span class="absolute top-2 right-2 bg-slate-900/80 text-amber-400 text-xs px-2.5 py-1 rounded-lg backdrop-blur border border-amber-500/30">ស្តុក: ${p.stock}</span>
+                    </div>
+                    <div class="p-4 space-y-2">
+                        <h3 class="font-bold text-lg text-amber-100">${p.model}</h3>
+                        <p class="text-xs text-slate-400">ម៉ាស៊ីន: ${p.movement} | ខ្សែ: ${p.strap}</p>
+                        <p class="text-xs text-slate-400">មុខ: ${p.size} | កញ្ចក់: ${p.glass} | ការពារទឹក: ${p.waterRes}</p>
+                        <p class="text-xs text-amber-300/80 font-medium">✨ ${p.features}</p>
+                        <div class="flex justify-between items-center pt-2 border-t border-slate-700">
+                            <span class="text-amber-400 font-bold text-lg">$${p.sellPrice}</span>
+                            <button onclick="addToCart(${p.id})" ${p.stock <= 0 ? 'disabled class="bg-slate-700 text-slate-500 cursor-not-allowed px-3 py-1.5 rounded-xl text-xs font-bold"' : 'class="bg-amber-500 hover:bg-amber-600 text-slate-950 px-3 py-1.5 rounded-xl text-xs font-bold transition"'}>
+                                ${p.stock <= 0 ? 'អស់ស្តុក' : 'ទិញ'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterProducts() {
+            const query = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = products.filter(p => p.model.toLowerCase().includes(query) || p.movement.toLowerCase().includes(query) || p.strap.toLowerCase().includes(query));
+            renderProducts(filtered);
+        }
+
+        function toggleCart() {
+            const modal = document.getElementById('cartModal');
+            modal.classList.toggle('hidden');
+        }
+
+        function addToCart(id) {
+            const product = products.find(p => p.id === id);
+            if (!product || product.stock <= 0) return;
+            const existing = cart.find(item => item.id === id);
+            if (existing) {
+                if (existing.qty < product.stock) {
+                    existing.qty++;
+                } else {
+                    alert('ចំនួនក្នុងកន្ត្រកលើសស្តុកដែលមាន!');
+                    return;
+                }
+            } else {
+                cart.push({ ...product, qty: 1 });
+            }
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            document.getElementById('cartCount').innerText = cart.reduce((sum, item) => sum + item.qty, 0);
+            const container = document.getElementById('cartItems');
+            if (cart.length === 0) {
+                container.innerHTML = `<p class="text-center text-slate-500 py-4">គ្មានទំនិញក្នុងកន្ត្រក</p>`;
+                document.getElementById('cartTotal').innerText = '$0.00';
+                return;
+            }
+            container.innerHTML = cart.map(item => `
+                <div class="flex justify-between items-center bg-slate-800 p-3 rounded-xl border border-slate-700">
+                    <div>
+                        <h4 class="font-bold text-sm text-slate-200">${item.model}</h4>
+                        <p class="text-xs text-amber-400">$${item.sellPrice} x ${item.qty}</p>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="changeQty(${item.id}, -1)" class="bg-slate-700 px-2 py-0.5 rounded text-xs">-</button>
+                        <span class="text-sm font-bold">${item.qty}</span>
+                        <button onclick="changeQty(${item.id}, 1)" class="bg-slate-700 px-2 py-0.5 rounded text-xs">+</button>
+                    </div>
+                </div>
+            `).join('');
+            const total = cart.reduce((sum, item) => sum + (item.sellPrice * item.qty), 0);
+            document.getElementById('cartTotal').innerText = `$${total.toFixed(2)}`;
+        }
+
+        function changeQty(id, delta) {
+            const item = cart.find(i => i.id === id);
+            const product = products.find(p => p.id === id);
+            if (!item) return;
+            item.qty += delta;
+            if (item.qty <= 0) {
+                cart = cart.filter(i => i.id !== id);
+            } else if (item.qty > product.stock) {
+                item.qty = product.stock;
+                alert('ចំនួនក្នុងស្តុកមានកំណត់!');
+            }
+            updateCartUI();
+        }
+
+        function checkout() {
+            if (cart.length === 0) {
+                alert('សូមជ្រើសរើសទំនិញជាមុនសិន!');
+                return;
+            }
+            const name = document.getElementById('custName').value.trim();
+            const phone = document.getElementById('custPhone').value.trim();
+            const address = document.getElementById('custAddress').value.trim();
+            if (!name || !phone || !address) {
+                alert('សូមបំពេញព័ត៌មានអតិថិជនឱ្យបានครบถ้วน!');
+                return;
+            }
+
+            // Reduce stock
+            cart.forEach(item => {
+                const prod = products.find(p => p.id === item.id);
+                if (prod) prod.stock -= item.qty;
+            });
+            localStorage.setItem('hodo_products', JSON.stringify(products));
+
+            // Record sale & orders for admin
+            let orders = JSON.parse(localStorage.getItem('hodo_orders')) || [];
+            let totalAmount = cart.reduce((sum, i) => sum + (i.sellPrice * i.qty), 0);
+            let totalCost = cart.reduce((sum, i) => sum + ((i.costPrice || (i.sellPrice * 0.6)) * i.qty), 0);
+            
+            const newOrder = {
+                id: 'ORD-' + Date.now().toString().slice(-6),
+                date: new Date().toLocaleString(),
+                customer: name,
+                phone: phone,
+                address: address,
+                items: [...cart],
+                totalAmount: totalAmount,
+                totalCost: totalCost,
+                profit: totalAmount - totalCost,
+                logisticStatus: 'Unpaid'
+            };
+            orders.unshift(newOrder);
+            localStorage.setItem('hodo_orders', JSON.stringify(orders));
+
+            // Simulate Telegram Notification
+            let botSettings = JSON.parse(localStorage.getItem('hodo_bot')) || { token: '', chatId: '' };
+            if (botSettings.token && botSettings.chatId) {
+                console.log(`[Telegram Simulation] Sent to Chat ID ${botSettings.chatId}: New Order ${newOrder.id} from ${name}`);
+            }
+
+            alert('ការបញ្ជាទិញបានជោគជ័យ! យើងនឹងติดต่อกลับទៅលោកអ្នកយ៉ាងឆាប់ៗ។');
+            cart = [];
+            updateCartUI();
+            toggleCart();
+            renderProducts();
+        }
+
+        renderProducts();
+    </script>
+</body>
+</html>

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="km">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HODO watches - Admin Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Preahvihear&family=Kantumruy+Pro:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Kantumruy Pro', sans-serif; background-color: #090d16; color: #f8fafc; }
+        .font-brand { font-family: 'Preahvihear', sans-serif; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col md:flex-row">
+    <!-- Sidebar -->
+    <aside class="w-full md:w-64 bg-slate-900 border-r border-amber-500/20 p-6 flex flex-col justify-between">
+        <div>
+            <div class="mb-8">
+                <h1 class="text-xl font-brand font-bold text-amber-400">HODO ADMIN</h1>
+                <p class="text-xs text-slate-400">ប្រព័ន្ធគ្រប់គ្រងហាងនាឡិកា</p>
+            </div>
+            <nav class="space-y-2">
+                <button onclick="switchTab('stock')" id="btn-stock" class="w-full text-left px-4 py-2.5 rounded-xl font-medium bg-amber-500 text-slate-950 transition">📦 គ្រប់គ្រងស្តុក</button>
+                <button onclick="switchTab('orders')" id="btn-orders" class="w-full text-left px-4 py-2.5 rounded-xl font-medium text-slate-300 hover:bg-slate-800 transition">🛍️ ការបញ្ជាទិញ (Sales)</button>
+                <button onclick="switchTab('logistics')" id="btn-logistics" class="w-full text-left px-4 py-2.5 rounded-xl font-medium text-slate-300 hover:bg-slate-800 transition">🚚 ដឹកជញ្ជូន (Logistics)</button>
+                <button onclick="switchTab('finance')" id="btn-finance" class="w-full text-left px-4 py-2.5 rounded-xl font-medium text-slate-300 hover:bg-slate-800 transition">💰 ចំណូល & ចំណាយ</button>
+                <button onclick="switchTab('bot')" id="btn-bot" class="w-full text-left px-4 py-2.5 rounded-xl font-medium text-slate-300 hover:bg-slate-800 transition">🤖 Telegram Bot</button>
+            </nav>
+        </div>
+        <div class="pt-4 border-t border-slate-800 text-xs text-slate-500">
+            HODO watches Management v1.0
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 p-6 md:p-8 overflow-y-auto">
+        
+        <!-- STOCK TAB -->
+        <div id="tab-stock" class="space-y-6">
+            <div class="flex justify-between items-center">
+                <h2 class="text-2xl font-bold text-amber-400">📦 គ្រប់គ្រងស្តុកនាឡិកា</h2>
+                <button onclick="openProductModal()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 px-4 py-2 rounded-xl font-bold text-sm transition">+ បន្ថែមនាឡិកាថ្មី</button>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-slate-800/80 text-amber-300 border-b border-slate-700">
+                                <th class="p-4">រូបភាព</th>
+                                <th class="p-4">ម៉ូដ (Model)</th>
+                                <th class="p-4">ព័ត៌មានលម្អិត</th>
+                                <th class="p-4">តម្លៃទិញចូល (Cost)</th>
+                                <th class="p-4">តម្លៃលក់ (Sell)</th>
+                                <th class="p-4">ស្តុក</th>
+                                <th class="p-4 text-center">សកម្មភាព</th>
+                            </tr>
+                        </thead>
+                        <tbody id="adminProductTable">
+                            <!-- Rendered by JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ORDERS TAB -->
+        <div id="tab-orders" class="space-y-6 hidden">
+            <h2 class="text-2xl font-bold text-amber-400">🛍️ ប្រវត្តិការបញ្ជាទិញពីអតិថិជន</h2>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <div id="ordersList" class="space-y-4">
+                    <!-- Orders rendered here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- LOGISTICS TAB -->
+        <div id="tab-logistics" class="space-y-6 hidden">
+            <h2 class="text-2xl font-bold text-amber-400">🚚 គ្រប់គ្រងការដឹកជញ្ជូន (Logistics)</h2>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+                <div id="logisticsList" class="space-y-4">
+                    <!-- Logistics rendered here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- FINANCE TAB -->
+        <div id="tab-finance" class="space-y-6 hidden">
+            <h2 class="text-2xl font-bold text-amber-400">💰 របាយការណ៍ចំណូល & ចំណាយ</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-lg">
+                    <p class="text-slate-400 text-sm">ប្រាក់ចំណូលសរុប (Revenue)</p>
+                    <h3 id="totalRevenue" class="text-3xl font-bold text-amber-400 mt-2">$0.00</h3>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-lg">
+                    <p class="text-slate-400 text-sm">ដើមទុនទិញចូលសរុប (Total Cost)</p>
+                    <h3 id="totalCostSum" class="text-3xl font-bold text-rose-400 mt-2">$0.00</h3>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-lg">
+                    <p class="text-slate-400 text-sm">ប្រាក់ចំណេញសុទ្ធ (Net Profit)</p>
+                    <h3 id="totalProfitSum" class="text-3xl font-bold text-emerald-400 mt-2">$0.00</h3>
+                </div>
+            </div>
+        </div>
+
+        <!-- BOT TAB -->
+        <div id="tab-bot" class="space-y-6 hidden">
+            <h2 class="text-2xl font-bold text-amber-400">🤖 តភ្ជាប់ Telegram Bot</h2>
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 max-w-xl space-y-4 shadow-xl">
+                <div>
+                    <label class="block text-sm text-slate-300 mb-1">Telegram Bot Token</label>
+                    <input type="text" id="botToken" placeholder="ឧ. 123456789:ABCdefGhIJKlmNoPQRsTUVwxyZ" class="w-full bg-slate-800 border border-slate-700 p-3 rounded-xl text-sm">
+                </div>
+                <div>
+                    <label class="block text-sm text-slate-300 mb-1">Telegram Chat ID (Owner/Group)</label>
+                    <input type="text" id="botChatId" placeholder="ឧ. -100123456789 ឬ @channel" class="w-full bg-slate-800 border border-slate-700 p-3 rounded-xl text-sm">
+                </div>
+                <button onclick="saveBotSettings()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-6 py-2.5 rounded-xl transition">រក្សាទុកការកំណត់ Bot</button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Add/Edit Product Modal -->
+    <div id="productModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden z-50 flex justify-center items-center p-4">
+        <div class="bg-slate-900 border border-amber-500/30 w-full max-w-lg rounded-2xl p-6 shadow-2xl space-y-4">
+            <h3 id="modalTitle" class="text-xl font-bold text-amber-400">បន្ថែមនាឡិកាថ្មី</h3>
+            <input type="hidden" id="editIndex" value="-1">
+            <div class="grid grid-cols-2 gap-4">
+                <input type="text" id="pModel" placeholder="កូដម៉ូត (Model)" class="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-sm">
+                <input type="text" id="pImg" placeholder="Link រូបភាព" class="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-sm">
+                <input type="text" id="pMovement" placeholder="ប្រភេទម៉ាស៊ីន (Quartz, Auto)" class="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-sm">
+                <input type="text" id="pStrap" placeholder="ប្រភេទខ្សែ & ពណ៌" class="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-sm">
+                <input type="text" id="pSize" placeholder="ទំហំកងមុខ (ឧ. 41mm)" class="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-sm">
+                <input type="text" id="pGlass" placeholder="កញ្ចក់នាឡិកា" class="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-sm">
+                <input type="text" id="pWater" placeholder="កម្រិតការពារទឹក (5ATM)" class="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-sm">
+                <input type="text" id="pFeatures" placeholder="មុខងារពិសេស" class="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-sm">
+                <input type="number" id="pCost" placeholder="តម្លៃទិញចូល (Cost)" class="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-sm">
+                <input type="number" id="pSell" placeholder="តម្លៃលក់ចេញ (Sell)" class="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-sm">
+                <input type="number" id="pStock" placeholder="ចំនួនស្តុក" class="bg-slate-800 border border-slate-700 p-2.5 rounded-xl text-sm col-span-2">
+            </div>
+            <div class="flex justify-end gap-3 pt-4 border-t border-slate-800">
+                <button onclick="closeProductModal()" class="bg-slate-800 hover:bg-slate-700 px-4 py-2 rounded-xl text-sm font-bold">បោះបង់</button>
+                <button onclick="saveProduct()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 px-6 py-2 rounded-xl text-sm font-bold">រក្សាទុក</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let products = JSON.parse(localStorage.getItem('hodo_products')) || [
+            { id: 1, model: 'HODO Classic Gold', img: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500', movement: 'Automatic', strap: 'ដែកខ្សែកូល - មាស', size: '41mm', glass: 'Sapphire', waterRes: '5ATM', features: 'Date display', costPrice: 120, sellPrice: 249, stock: 5 },
+            { id: 2, model: 'HODO Sport Chrono', img: 'https://images.unsplash.com/photo-1542496658-e33a6d0d50f6?w=500', movement: 'Quartz', strap: 'ស្បែកខ្មៅ', size: '43mm', glass: 'Mineral', waterRes: '10ATM', features: 'Chronograph', costPrice: 90, sellPrice: 180, stock: 3 }
+        ];
+
+        function switchTab(tabId) {
+            ['stock', 'orders', 'logistics', 'finance', 'bot'].forEach(t => {
+                document.getElementById('tab-' + t).classList.add('hidden');
+                document.getElementById('btn-' + t).className = 'w-full text-left px-4 py-2.5 rounded-xl font-medium text-slate-300 hover:bg-slate-800 transition';
+            });
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            document.getElementById('btn-' + tabId).className = 'w-full text-left px-4 py-2.5 rounded-xl font-medium bg-amber-500 text-slate-950 transition';
+            
+            if (tabId === 'orders') renderOrders();
+            if (tabId === 'logistics') renderLogistics();
+            if (tabId === 'finance') renderFinance();
+            if (tabId === 'bot') loadBotSettings();
+        }
+
+        function renderAdminProducts() {
+            localStorage.setItem('hodo_products', JSON.stringify(products));
+            const tbody = document.getElementById('adminProductTable');
+            tbody.innerHTML = products.map((p, idx) => `
+                <tr class="border-b border-slate-800 hover:bg-slate-800/40">
+                    <td class="p-4"><img src="${p.img}" class="w-12 h-12 rounded-lg object-cover bg-slate-800"></td>
+                    <td class="p-4 font-bold text-amber-200">${p.model}</td>
+                    <td class="p-4 text-xs text-slate-400">${p.movement} | ${p.strap} | ${p.size}</td>
+                    <td class="p-4 text-rose-400 font-medium">$${p.costPrice || 0}</td>
+                    <td class="p-4 text-amber-400 font-medium">$${p.sellPrice}</td>
+                    <td class="p-4 font-bold">${p.stock}</td>
+                    <td class="p-4 text-center space-x-2">
+                        <button onclick="editProduct(${idx})" class="bg-slate-800 hover:bg-slate-700 text-amber-400 px-3 py-1.5 rounded-lg text-xs font-bold">កែ</button>
+                        <button onclick="deleteProduct(${idx})" class="bg-rose-500/20 hover:bg-rose-500/30 text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold">លុប</button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function openProductModal() {
+            document.getElementById('modalTitle').innerText = 'បន្ថែមនាឡិកាថ្មី';
+            document.getElementById('editIndex').value = -1;
+            ['pModel','pImg','pMovement','pStrap','pSize','pGlass','pWater','pFeatures','pCost','pSell','pStock'].forEach(id => document.getElementById(id).value = '');
+            document.getElementById('productModal').classList.remove('hidden');
+        }
+
+        function closeProductModal() {
+            document.getElementById('productModal').classList.add('hidden');
+        }
+
+        function saveProduct() {
+            const idx = parseInt(document.getElementById('editIndex').value);
+            const p = {
+                id: idx === -1 ? Date.now() : products[idx].id,
+                model: document.getElementById('pModel').value,
+                img: document.getElementById('pImg').value,
+                movement: document.getElementById('pMovement').value,
+                strap: document.getElementById('pStrap').value,
+                size: document.getElementById('pSize').value,
+                glass: document.getElementById('pGlass').value,
+                waterRes: document.getElementById('pWater').value,
+                features: document.getElementById('pFeatures').value,
+                costPrice: parseFloat(document.getElementById('pCost').value) || 0,
+                sellPrice: parseFloat(document.getElementById('pSell').value) || 0,
+                stock: parseInt(document.getElementById('pStock').value) || 0
+            };
+            if (!p.model) { alert('សូមបំពេញឈ្មោះម៉ូត!'); return; }
+            if (idx === -1) products.push(p);
+            else products[idx] = p;
+            closeProductModal();
+            renderAdminProducts();
+        }
+
+        function editProduct(idx) {
+            const p = products[idx];
+            document.getElementById('modalTitle').innerText = 'កែសម្រួលនាឡិកា';
+            document.getElementById('editIndex').value = idx;
+            document.getElementById('pModel').value = p.model;
+            document.getElementById('pImg').value = p.img;
+            document.getElementById('pMovement').value = p.movement;
+            document.getElementById('pStrap').value = p.strap;
+            document.getElementById('pSize').value = p.size;
+            document.getElementById('pGlass').value = p.glass;
+            document.getElementById('pWater').value = p.waterRes;
+            document.getElementById('pFeatures').value = p.features;
+            document.getElementById('pCost').value = p.costPrice;
+            document.getElementById('pSell').value = p.sellPrice;
+            document.getElementById('pStock').value = p.stock;
+            document.getElementById('productModal').classList.remove('hidden');
+        }
+
+        function deleteProduct(idx) {
+            if (confirm('តើអ្នកពិតជាចង់លុបទំនិញនេះមែនទេ?')) {
+                products.splice(idx, 1);
+                renderAdminProducts();
+            }
+        }
+
+        function renderOrders() {
+            let orders = JSON.parse(localStorage.getItem('hodo_orders')) || [];
+            const container = document.getElementById('ordersList');
+            if (orders.length === 0) {
+                container.innerHTML = `<p class="text-slate-500 text-center py-6">មិនទាន់មានការបញ្ជាទិញនៅឡើយទេ</p>`;
+                return;
+            }
+            container.innerHTML = orders.map(o => `
+                <div class="bg-slate-800/60 border border-slate-700/60 p-4 rounded-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-amber-400">${o.id}</span>
+                            <span class="text-xs text-slate-400">${o.date}</span>
+                        </div>
+                        <p class="text-sm font-bold text-slate-200 mt-1">អតិថិជន: ${o.customer} (${o.phone})</p>
+                        <p class="text-xs text-slate-400">អាសយដ្ឋាន: ${o.address}</p>
+                        <div class="mt-2 text-xs text-amber-200">
+                            ទំនិញ: ${o.items.map(i => `${i.model} (x${i.qty})`).join(', ')}
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-lg font-bold text-amber-400">$${o.totalAmount.toFixed(2)}</span>
+                        <p class="text-xs text-emerald-400">ចំណេញ: +$${o.profit.toFixed(2)}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderLogistics() {
+            let orders = JSON.parse(localStorage.getItem('hodo_orders')) || [];
+            const container = document.getElementById('logisticsList');
+            if (orders.length === 0) {
+                container.innerHTML = `<p class="text-slate-500 text-center py-6">គ្មានទិន្នន័យដឹកជញ្ជូន</p>`;
+                return;
+            }
+            container.innerHTML = orders.map((o, idx) => `
+                <div class="bg-slate-800/60 border border-slate-700/60 p-4 rounded-xl flex justify-between items-center">
+                    <div>
+                        <span class="font-bold text-amber-400">${o.id}</span> - <span class="text-sm text-slate-200">${o.customer}</span>
+                        <p class="text-xs text-slate-400 mt-0.5">ផ្ទុកនៅ: ${o.address}</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <select onchange="updateLogisticStatus(${idx}, this.value)" class="bg-slate-900 border border-slate-700 text-xs px-3 py-1.5 rounded-lg font-bold ${o.logisticStatus === 'Paid' ? 'text-emerald-400' : 'text-rose-400'}">
+                            <option value="Unpaid" ${o.logisticStatus === 'Unpaid' ? 'selected' : ''}>Logistic Unpaid</option>
+                            <option value="Paid" ${o.logisticStatus === 'Paid' ? 'selected' : ''}>Logistic Paid</option>
+                        </select>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateLogisticStatus(idx, status) {
+            let orders = JSON.parse(localStorage.getItem('hodo_orders')) || [];
+            orders[idx].logisticStatus = status;
+            localStorage.setItem('hodo_orders', JSON.stringify(orders));
+            renderLogistics();
+        }
+
+        function renderFinance() {
+            let orders = JSON.parse(localStorage.getItem('hodo_orders')) || [];
+            const rev = orders.reduce((sum, o) => sum + o.totalAmount, 0);
+            const cost = orders.reduce((sum, o) => sum + o.totalCost, 0);
+            const profit = orders.reduce((sum, o) => sum + o.profit, 0);
+            document.getElementById('totalRevenue').innerText = `$${rev.toFixed(2)}`;
+            document.getElementById('totalCostSum').innerText = `$${cost.toFixed(2)}`;
+            document.getElementById('totalProfitSum').innerText = `$${profit.toFixed(2)}`;
+        }
+
+        function saveBotSettings() {
+            const token = document.getElementById('botToken').value.trim();
+            const chatId = document.getElementById('botChatId').value.trim();
+            localStorage.setItem('hodo_bot', JSON.stringify({ token, chatId }));
+            alert('រក្សាទុកការកំណត់ Telegram Bot បានជោគជ័យ!');
+        }
+
+        function loadBotSettings() {
+            let bot = JSON.parse(localStorage.getItem('hodo_bot')) || { token: '', chatId: '' };
+            document.getElementById('botToken').value = bot.token;
+            document.getElementById('botChatId').value = bot.chatId;
+        }
+
+        renderAdminProducts();
+    </script>
+</body>
+</html>
